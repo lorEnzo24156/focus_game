@@ -312,14 +312,19 @@
             </div>
         </section>
 
-        <!-- Tabella Storico Ultimi 7 Giorni con Modifica Retroattiva -->
+        <!-- Tabella Storico Ultimi 7 Giorni con Modifica Retroattiva & Aggiunta Giorno Passato -->
         <section class="apple-glass p-6 md:p-8 space-y-4">
-            <div class="flex justify-between items-center border-b border-white/10 pb-4">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-white flex items-center gap-2">
                         <i class="fa-solid fa-calendar-days text-[#007AFF]"></i> Storico & Revisione
                     </h2>
-                    <p class="text-xs text-[#8E8E93]">Visualizza o modifica retroattivamente ciascuna giornata.</p>
+                    <p class="text-xs text-[#8E8E93]">Mostra sempre tutti gli ultimi 7 giorni (anche se vuoti) e permette di aggiungere qualsiasi data passata.</p>
+                </div>
+                <div>
+                    <button type="button" onclick="openDatePickerModal()" class="apple-pill-btn px-4 py-2 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-calendar-plus"></i> Modifica Altra Data Passata
+                    </button>
                 </div>
             </div>
 
@@ -347,7 +352,7 @@
 
     </div>
 
-    <!-- Modale Modifica Giornata Precedente -->
+    <!-- Modale Modifica Giornata Precedente / Selezionata -->
     <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
         <div class="apple-glass max-w-md w-full p-6 space-y-4 border-white/20 shadow-2xl relative">
             <div class="flex justify-between items-center border-b border-white/10 pb-3">
@@ -402,6 +407,29 @@
                 <button type="button" onclick="saveModalEdit(event)" class="apple-pill-btn px-4 py-2 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md">
                     <i class="fa-solid fa-check"></i> Salva Modifiche
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Selezione Data Passata Qualsiasi -->
+    <div id="datePickerModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+        <div class="apple-glass max-w-sm w-full p-6 space-y-4 border-white/20 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-white/10 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar text-[#007AFF]"></i> Seleziona Data
+                </h3>
+                <button type="button" onclick="closeDatePickerModal()" class="text-[#8E8E93] hover:text-white text-xl transition">&times;</button>
+            </div>
+
+            <p class="text-xs text-[#8E8E93]">Scegli una data qualsiasi (anche precedente agli ultimi 7 giorni) per compilare o rettificare le attività svolte:</p>
+
+            <div>
+                <input type="date" id="customDateSelect" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white font-mono text-sm focus:border-[#007AFF] focus:outline-none">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-white/10">
+                <button type="button" onclick="closeDatePickerModal()" class="apple-pill-btn px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-semibold">Annulla</button>
+                <button type="button" onclick="confirmCustomDateSelect()" class="apple-pill-btn px-4 py-2 bg-[#007AFF] text-white rounded-xl text-xs font-bold">Apri e Compila</button>
             </div>
         </div>
     </div>
@@ -806,15 +834,28 @@
             } catch(e) {}
         }
 
-        // Storico & Modale
+        // Storico Sempre Completo (mostra sempre tutti gli ultimi 7 giorni)
         function renderHistoryTable() {
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
 
-            const dateKeys = Object.keys(appData.history).sort().reverse().slice(0, 7);
+            // Genera sempre l'array completo degli ultimi 7 giorni da oggi a ritroso
+            const last7Days = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                last7Days.push(`${y}-${m}-${day}`);
+            }
 
-            dateKeys.forEach(date => {
-                const row = appData.history[date];
+            // Aggiungi anche eventuali date ancora più vecchie se presenti nella cronologia
+            const allSavedDates = Object.keys(appData.history).filter(d => !last7Days.includes(d)).sort().reverse();
+            const datesToDisplay = [...last7Days, ...allSavedDates];
+
+            datesToDisplay.forEach(date => {
+                const row = appData.history[date] || { study: 0, steps: 0, reading: 0, phone: 0, spent: 0, earnedNet: 0 };
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/5 transition";
 
@@ -826,8 +867,13 @@
                 const phoneStr = `${phoneH}h ${String(phoneM).padStart(2, '0')}m`;
                 const malus = calcPhoneMalus(row.phone || 0);
 
+                const hasData = (row.study > 0 || row.steps > 0 || row.reading > 0 || row.phone > 0 || row.spent > 0);
+
                 tr.innerHTML = `
-                    <td class="py-3 px-3 font-semibold ${isToday ? 'text-[#007AFF]' : 'text-white'}">${dateLabel}</td>
+                    <td class="py-3 px-3 font-semibold ${isToday ? 'text-[#007AFF]' : 'text-white'}">
+                        ${dateLabel}
+                        ${!hasData && !isToday ? '<span class="text-[9px] text-[#8E8E93] ml-1 bg-white/5 px-1.5 py-0.5 rounded-full">Vuoto</span>' : ''}
+                    </td>
                     <td class="py-3 px-3">${row.study || 0}m</td>
                     <td class="py-3 px-3">${(row.steps || 0).toLocaleString()}</td>
                     <td class="py-3 px-3">${row.reading || 0}m</td>
@@ -837,7 +883,7 @@
                     <td class="py-3 px-3 text-[#8E8E93]">${row.spent || 0}m</td>
                     <td class="py-3 px-3 text-right">
                         <button type="button" onclick="openEditModal('${date}')" class="apple-pill-btn px-2.5 py-1 bg-white/10 hover:bg-white/20 text-[#64D2FF] rounded-lg text-[11px] font-semibold border border-white/5">
-                            <i class="fa-solid fa-pen"></i> Modifica
+                            <i class="fa-solid fa-pen"></i> ${hasData ? 'Modifica' : 'Compila'}
                         </button>
                     </td>
                 `;
@@ -847,8 +893,8 @@
 
         function openEditModal(dateKey) {
             editingDateKey = dateKey;
+            ensureDateRecord(dateKey);
             const rec = appData.history[dateKey];
-            if (!rec) return;
 
             document.getElementById('modalDateLabel').innerText = dateKey;
             document.getElementById('editStudy').value = rec.study || 0;
@@ -898,11 +944,12 @@
                 event.stopPropagation();
             }
 
-            if (!editingDateKey || !appData.history[editingDateKey]) {
+            if (!editingDateKey) {
                 closeEditModal();
                 return;
             }
 
+            ensureDateRecord(editingDateKey);
             const rec = appData.history[editingDateKey];
 
             const newStudy = Math.max(0, parseInt(document.getElementById('editStudy').value, 10) || 0);
@@ -940,6 +987,33 @@
             }
 
             closeEditModal();
+        }
+
+        // Modale Selezione Data Personalizzata Passata
+        function openDatePickerModal() {
+            const picker = document.getElementById('customDateSelect');
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const y = yesterday.getFullYear();
+            const m = String(yesterday.getMonth() + 1).padStart(2, '0');
+            const d = String(yesterday.getDate()).padStart(2, '0');
+            picker.value = `${y}-${m}-${d}`;
+            picker.max = getTodayKey();
+            document.getElementById('datePickerModal').classList.remove('hidden');
+        }
+
+        function closeDatePickerModal() {
+            document.getElementById('datePickerModal').classList.add('hidden');
+        }
+
+        function confirmCustomDateSelect() {
+            const chosenDate = document.getElementById('customDateSelect').value;
+            if (!chosenDate) {
+                alert("Seleziona una data valida.");
+                return;
+            }
+            closeDatePickerModal();
+            openEditModal(chosenDate);
         }
 
         // Modali Secondari
