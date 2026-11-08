@@ -49,6 +49,9 @@
             -webkit-appearance: none;
             margin: 0;
         }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen pb-16 selection:bg-blue-500/30 selection:text-white">
@@ -68,8 +71,8 @@
             <div class="flex items-center gap-5 bg-black/40 border border-white/10 px-6 py-4 rounded-3xl shadow-inner">
                 <div class="text-right">
                     <div class="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider">Saldo Ore Gaming</div>
-                    <div id="bankrollDisplay" class="text-3xl md:text-4xl font-extrabold text-[#007AFF] tracking-tight">0h 00m</div>
-                    <div id="todayNetBadge" class="text-[11px] text-[#8E8E93] mt-0.5">Oggi netti: <span class="text-white font-semibold">+0m</span></div>
+                    <div id="bankrollDisplay" class="text-3xl md:text-4xl font-extrabold text-[#007AFF] tracking-tight tabular-nums">0h 00m</div>
+                    <div id="todayNetBadge" class="text-[11px] text-[#8E8E93] mt-0.5">Oggi netti: <span class="text-white font-semibold tabular-nums">+0m</span></div>
                 </div>
                 <div class="h-12 w-[1px] bg-white/10"></div>
                 <div id="pcStatusBadge" class="flex flex-col items-center justify-center">
@@ -87,12 +90,29 @@
                 <button type="button" onclick="openInfoModal()" class="apple-pill-btn px-4 py-2 bg-white/10 hover:bg-white/15 text-[#EBEBF5] rounded-full text-xs font-semibold flex items-center gap-2 border border-white/10">
                     <i class="fa-solid fa-circle-info text-[#007AFF]"></i> Regolamento & Info
                 </button>
+                <button type="button" onclick="checkRolloverManualTrigger()" class="apple-pill-btn px-4 py-2 bg-white/10 hover:bg-white/15 text-[#EBEBF5] rounded-full text-xs font-semibold flex items-center gap-2 border border-white/10">
+                    <i class="fa-solid fa-repeat text-[#5856D6]"></i> Rollover Domenicale
+                </button>
             </div>
             <div class="flex gap-2">
                 <button type="button" onclick="openBackupModal()" class="apple-pill-btn px-4 py-2 bg-white/10 hover:bg-white/15 text-[#EBEBF5] rounded-full text-xs font-semibold flex items-center gap-2 border border-white/10">
                     <i class="fa-solid fa-arrow-right-arrow-left text-[#34C759]"></i> Backup & Dati
                 </button>
             </div>
+        </div>
+
+        <!-- Banner Notifica Rollover Eseguito -->
+        <div id="rolloverAlertBanner" class="hidden apple-glass p-4 border-[#5856D6]/40 bg-[#5856D6]/10 flex justify-between items-center text-xs">
+            <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-full bg-[#5856D6]/20 text-[#5E5CE6] flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-white">Rollover Settimanale Applicato</span>
+                    <p id="rolloverAlertText" class="text-[#8E8E93] text-[11px]">Il saldo attivo eccedente è stato azzerato preservando il cuscinetto massimo di 2h 00m (120m).</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('rolloverAlertBanner').classList.add('hidden')" class="text-[#8E8E93] hover:text-white text-base px-2">&times;</button>
         </div>
 
         <!-- Macro-Aree / Pilastri Quotidiani -->
@@ -114,11 +134,11 @@
                 </div>
 
                 <div class="text-xs text-[#8E8E93] space-y-1 bg-black/30 p-3 rounded-2xl border border-white/5">
-                    <div class="flex justify-between"><span>0 – 60 min:</span> <span class="text-white font-mono font-medium">0.50x</span></div>
-                    <div class="flex justify-between"><span>60 – 150 min:</span> <span class="text-white font-mono font-medium">0.75x</span></div>
-                    <div class="flex justify-between"><span>Oltre 150 min:</span> <span class="text-[#007AFF] font-mono font-bold">1.00x</span></div>
+                    <div class="flex justify-between"><span>0 – 60 min:</span> <span class="text-white font-medium tabular-nums">0.50x</span></div>
+                    <div class="flex justify-between"><span>60 – 150 min:</span> <span class="text-white font-medium tabular-nums">0.75x</span></div>
+                    <div class="flex justify-between"><span>Oltre 150 min:</span> <span class="text-[#007AFF] font-bold tabular-nums">1.00x</span></div>
                     <div class="flex justify-between border-t border-white/5 pt-1 mt-1 text-[11px]">
-                        <span>Cap Massimo:</span> <span class="text-white font-bold font-mono">120m Gaming</span>
+                        <span>Cap Massimo:</span> <span class="text-white font-bold tabular-nums">120m Gaming</span>
                     </div>
                 </div>
 
@@ -128,7 +148,7 @@
                     <div class="flex items-center gap-2">
                         <button type="button" onclick="updatePillar('study', -30)" class="apple-pill-btn px-2.5 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold">-30m</button>
                         <button type="button" onclick="updatePillar('study', -15)" class="apple-pill-btn px-2.5 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold">-15m</button>
-                        <input type="number" id="inputStudyMin" min="0" max="600" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white font-mono text-sm focus:border-[#007AFF] focus:outline-none">
+                        <input type="number" id="inputStudyMin" min="0" max="600" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white tabular-nums text-sm focus:border-[#007AFF] focus:outline-none">
                         <button type="button" onclick="updatePillar('study', 15)" class="apple-pill-btn px-2.5 py-2 bg-[#007AFF]/30 hover:bg-[#007AFF]/40 text-[#64D2FF] rounded-xl text-xs font-semibold">+15m</button>
                         <button type="button" onclick="updatePillar('study', 30)" class="apple-pill-btn px-2.5 py-2 bg-[#007AFF]/50 hover:bg-[#007AFF]/60 text-white rounded-xl text-xs font-semibold">+30m</button>
                     </div>
@@ -140,7 +160,7 @@
                         <span class="font-medium flex items-center gap-1.5"><i class="fa-solid fa-stopwatch text-[#007AFF]"></i> Pomodoro Focus</span>
                         <span id="pomodoroStateLabel" class="text-[11px] font-semibold text-[#8E8E93]">Pronto</span>
                     </div>
-                    <div id="pomodoroTimerDisplay" class="text-3xl font-extrabold text-center text-white font-mono tracking-widest py-1">
+                    <div id="pomodoroTimerDisplay" class="text-3xl font-extrabold text-center text-white tabular-nums tracking-widest py-1">
                         30:00
                     </div>
                     <div class="flex gap-2">
@@ -155,7 +175,7 @@
 
                 <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 flex justify-between items-center text-xs">
                     <span class="text-[#8E8E93]">Credito Studio Guadagnato:</span>
-                    <span id="studyEarnedDisplay" class="text-[#007AFF] font-mono font-bold text-sm">+0 min</span>
+                    <span id="studyEarnedDisplay" class="text-[#007AFF] font-bold tabular-nums text-sm">+0 min</span>
                 </div>
             </section>
 
@@ -181,7 +201,7 @@
                         <div class="flex items-center gap-1.5">
                             <button type="button" onclick="updatePillar('steps', -1000)" class="apple-pill-btn px-2 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-[11px] font-semibold">-1k</button>
                             <button type="button" onclick="updatePillar('steps', -500)" class="apple-pill-btn px-2 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-[11px] font-semibold">-500</button>
-                            <input type="number" id="inputSteps" min="0" max="60000" step="500" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white font-mono text-sm focus:border-[#34C759] focus:outline-none">
+                            <input type="number" id="inputSteps" min="0" max="60000" step="500" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white tabular-nums text-sm focus:border-[#34C759] focus:outline-none">
                             <button type="button" onclick="updatePillar('steps', 500)" class="apple-pill-btn px-2 py-2 bg-[#34C759]/30 hover:bg-[#34C759]/40 text-[#30D158] rounded-xl text-[11px] font-semibold">+500</button>
                             <button type="button" onclick="updatePillar('steps', 1000)" class="apple-pill-btn px-2 py-2 bg-[#34C759]/50 hover:bg-[#34C759]/60 text-white rounded-xl text-[11px] font-semibold">+1k</button>
                         </div>
@@ -189,7 +209,7 @@
 
                     <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 flex justify-between items-center text-xs">
                         <span class="text-[#8E8E93]">Credito Passi:</span>
-                        <span id="stepsEarnedDisplay" class="text-[#34C759] font-mono font-bold text-sm">+0 min</span>
+                        <span id="stepsEarnedDisplay" class="text-[#34C759] font-bold tabular-nums text-sm">+0 min</span>
                     </div>
                 </div>
 
@@ -212,7 +232,7 @@
                         <div class="flex items-center gap-1.5">
                             <button type="button" onclick="updatePillar('reading', -15)" class="apple-pill-btn px-2 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-[11px] font-semibold">-15m</button>
                             <button type="button" onclick="updatePillar('reading', -5)" class="apple-pill-btn px-2 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-[11px] font-semibold">-5m</button>
-                            <input type="number" id="inputReadingMin" min="0" max="240" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white font-mono text-sm focus:border-[#FF9500] focus:outline-none">
+                            <input type="number" id="inputReadingMin" min="0" max="240" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white tabular-nums text-sm focus:border-[#FF9500] focus:outline-none">
                             <button type="button" onclick="updatePillar('reading', 5)" class="apple-pill-btn px-2 py-2 bg-[#FF9500]/30 hover:bg-[#FF9500]/40 text-[#FF9F0A] rounded-xl text-[11px] font-semibold">+5m</button>
                             <button type="button" onclick="updatePillar('reading', 15)" class="apple-pill-btn px-2 py-2 bg-[#FF9500]/50 hover:bg-[#FF9500]/60 text-white rounded-xl text-[11px] font-semibold">+15m</button>
                         </div>
@@ -220,7 +240,7 @@
 
                     <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 flex justify-between items-center text-xs">
                         <span class="text-[#8E8E93]">Credito Lettura:</span>
-                        <span id="readingEarnedDisplay" class="text-[#FF9500] font-mono font-bold text-sm">+0 min</span>
+                        <span id="readingEarnedDisplay" class="text-[#FF9500] font-bold tabular-nums text-sm">+0 min</span>
                     </div>
                 </div>
 
@@ -247,11 +267,11 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="text-[11px] text-[#8E8E93] font-medium block mb-1">Ore</label>
-                            <input type="number" id="inputPhoneHours" min="0" max="24" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white font-mono text-sm focus:border-[#FF3B30] focus:outline-none">
+                            <input type="number" id="inputPhoneHours" min="0" max="24" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white tabular-nums text-sm focus:border-[#FF3B30] focus:outline-none">
                         </div>
                         <div>
                             <label class="text-[11px] text-[#8E8E93] font-medium block mb-1">Minuti</label>
-                            <input type="number" id="inputPhoneMinutes" min="0" max="59" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white font-mono text-sm focus:border-[#FF3B30] focus:outline-none">
+                            <input type="number" id="inputPhoneMinutes" min="0" max="59" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white tabular-nums text-sm focus:border-[#FF3B30] focus:outline-none">
                         </div>
                     </div>
 
@@ -264,7 +284,7 @@
 
                     <div class="p-3.5 rounded-2xl bg-black/40 border border-white/5 flex justify-between items-center text-xs">
                         <span class="text-[#8E8E93]">Penalità Malus:</span>
-                        <span id="phoneMalusDisplay" class="text-[#FF453A] font-mono font-bold text-sm">-0 min</span>
+                        <span id="phoneMalusDisplay" class="text-[#FF453A] font-bold tabular-nums text-sm">-0 min</span>
                     </div>
                 </div>
 
@@ -289,7 +309,7 @@
                     </div>
 
                     <div class="flex gap-2 pt-1">
-                        <input type="number" id="customSpendInput" min="5" step="5" placeholder="Minuti personalizzati" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono text-xs focus:border-[#007AFF] focus:outline-none">
+                        <input type="number" id="customSpendInput" min="5" step="5" placeholder="Minuti personalizzati" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums text-xs focus:border-[#007AFF] focus:outline-none">
                         <button type="button" onclick="spendCustomMinutes()" class="apple-pill-btn px-4 py-2 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-xl text-xs font-bold shadow-md whitespace-nowrap">Scala</button>
                     </div>
                 </div>
@@ -313,37 +333,37 @@
         </section>
 
         <!-- Tabella Storico Ultimi 7 Giorni con Modifica Retroattiva & Aggiunta Giorno Passato -->
-        <section class="apple-glass p-6 md:p-8 space-y-4">
+        <section class="apple-glass p-6 md:p-8 space-y-5">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
                 <div>
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2.5">
                         <i class="fa-solid fa-calendar-days text-[#007AFF]"></i> Storico & Revisione
                     </h2>
-                    <p class="text-xs text-[#8E8E93]">Mostra sempre tutti gli ultimi 7 giorni (anche se vuoti) e permette di aggiungere qualsiasi data passata.</p>
+                    <p class="text-sm text-[#8E8E93] mt-0.5">Riepilogo delle sessioni registrate negli ultimi 7 giorni con accesso rapido alla compilazione e modifica.</p>
                 </div>
                 <div>
-                    <button type="button" onclick="openDatePickerModal()" class="apple-pill-btn px-4 py-2 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
-                        <i class="fa-solid fa-calendar-plus"></i> Modifica Altra Data Passata
+                    <button type="button" onclick="openDatePickerModal()" class="apple-pill-btn px-4 py-2.5 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-full text-xs font-bold flex items-center gap-2 shadow-md">
+                        <i class="fa-solid fa-calendar-plus text-sm"></i> Modifica Altra Data Passata
                     </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+            <div class="overflow-x-auto rounded-2xl border border-white/10 bg-black/30">
+                <table class="w-full text-left text-sm md:text-base border-collapse">
                     <thead>
-                        <tr class="text-[#8E8E93] border-b border-white/10">
-                            <th class="py-3 px-3">Data</th>
-                            <th class="py-3 px-3">Studio</th>
-                            <th class="py-3 px-3">Passi</th>
-                            <th class="py-3 px-3">Lettura</th>
-                            <th class="py-3 px-3">Telefono</th>
-                            <th class="py-3 px-3">Malus</th>
-                            <th class="py-3 px-3 font-bold text-[#007AFF]">Netto PC</th>
-                            <th class="py-3 px-3">Giocato</th>
-                            <th class="py-3 px-3 text-right">Azione</th>
+                        <tr class="text-xs md:text-sm font-semibold uppercase tracking-wider text-[#A1A1A6] border-b border-white/10 bg-white/[0.04]">
+                            <th class="py-3.5 px-4">Data</th>
+                            <th class="py-3.5 px-4 text-center">Studio</th>
+                            <th class="py-3.5 px-4 text-center">Passi</th>
+                            <th class="py-3.5 px-4 text-center">Lettura</th>
+                            <th class="py-3.5 px-4 text-center">Telefono</th>
+                            <th class="py-3.5 px-4 text-center">Malus</th>
+                            <th class="py-3.5 px-4 text-center font-bold text-[#007AFF]">Netto PC</th>
+                            <th class="py-3.5 px-4 text-center">Giocato</th>
+                            <th class="py-3.5 px-4 text-right">Azione</th>
                         </tr>
                     </thead>
-                    <tbody id="historyTableBody" class="divide-y divide-white/5 font-mono text-[#D1D1D6]">
+                    <tbody id="historyTableBody" class="divide-y divide-white/5 text-[#EBEBF5]">
                         <!-- Popolato dinamicamente -->
                     </tbody>
                 </table>
@@ -357,7 +377,7 @@
         <div class="apple-glass max-w-md w-full p-6 space-y-4 border-white/20 shadow-2xl relative">
             <div class="flex justify-between items-center border-b border-white/10 pb-3">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-[#007AFF]"></i> Modifica: <span id="modalDateLabel" class="text-[#64D2FF] font-mono">--</span>
+                    <i class="fa-solid fa-pen-to-square text-[#007AFF]"></i> Modifica: <span id="modalDateLabel" class="text-[#64D2FF] font-semibold">--</span>
                 </h3>
                 <button type="button" onclick="closeEditModal()" class="text-[#8E8E93] hover:text-white text-xl transition">&times;</button>
             </div>
@@ -365,40 +385,40 @@
             <div class="space-y-3 text-xs">
                 <div>
                     <label class="text-[#8E8E93] font-medium block mb-1">Minuti Studio</label>
-                    <input type="number" id="editStudy" min="0" max="600" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:border-[#007AFF] focus:outline-none">
+                    <input type="number" id="editStudy" min="0" max="600" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums focus:border-[#007AFF] focus:outline-none">
                 </div>
 
                 <div>
                     <label class="text-[#8E8E93] font-medium block mb-1">Numero Passi</label>
-                    <input type="number" id="editSteps" min="0" max="60000" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:border-[#34C759] focus:outline-none">
+                    <input type="number" id="editSteps" min="0" max="60000" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums focus:border-[#34C759] focus:outline-none">
                 </div>
 
                 <div>
                     <label class="text-[#8E8E93] font-medium block mb-1">Minuti Lettura</label>
-                    <input type="number" id="editReading" min="0" max="240" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:border-[#FF9500] focus:outline-none">
+                    <input type="number" id="editReading" min="0" max="240" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums focus:border-[#FF9500] focus:outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-[#8E8E93] font-medium block mb-1">Telefono (Ore)</label>
-                        <input type="number" id="editPhoneHours" min="0" max="24" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:border-[#FF3B30] focus:outline-none">
+                        <input type="number" id="editPhoneHours" min="0" max="24" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums focus:border-[#FF3B30] focus:outline-none">
                     </div>
                     <div>
                         <label class="text-[#8E8E93] font-medium block mb-1">Telefono (Minuti)</label>
-                        <input type="number" id="editPhoneMinutes" min="0" max="59" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:border-[#FF3B30] focus:outline-none">
+                        <input type="number" id="editPhoneMinutes" min="0" max="59" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums focus:border-[#FF3B30] focus:outline-none">
                     </div>
                 </div>
 
                 <div>
                     <label class="text-[#8E8E93] font-medium block mb-1">Minuti Gaming Giocati</label>
-                    <input type="number" id="editSpent" min="0" max="600" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white font-mono focus:border-[#007AFF] focus:outline-none">
+                    <input type="number" id="editSpent" min="0" max="600" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white tabular-nums focus:border-[#007AFF] focus:outline-none">
                 </div>
 
                 <!-- Anteprima Ricalcolo Istantaneo -->
                 <div class="p-3 bg-black/50 border border-white/5 rounded-2xl text-xs space-y-1">
-                    <div class="flex justify-between text-[#8E8E93]"><span>Lordo Guadagnato:</span> <span id="previewGross" class="font-mono text-white">0m</span></div>
-                    <div class="flex justify-between text-[#8E8E93]"><span>Malus Telefono:</span> <span id="previewMalus" class="font-mono text-[#FF453A]">-0m</span></div>
-                    <div class="flex justify-between font-bold border-t border-white/10 pt-1 text-white"><span>Netto PC Risultante:</span> <span id="previewNet" class="font-mono text-[#007AFF]">0m</span></div>
+                    <div class="flex justify-between text-[#8E8E93]"><span>Lordo Guadagnato:</span> <span id="previewGross" class="tabular-nums font-semibold text-white">0m</span></div>
+                    <div class="flex justify-between text-[#8E8E93]"><span>Malus Telefono:</span> <span id="previewMalus" class="tabular-nums font-semibold text-[#FF453A]">-0m</span></div>
+                    <div class="flex justify-between font-bold border-t border-white/10 pt-1 text-white"><span>Netto PC Risultante:</span> <span id="previewNet" class="tabular-nums font-bold text-[#007AFF]">0m</span></div>
                 </div>
             </div>
 
@@ -421,10 +441,10 @@
                 <button type="button" onclick="closeDatePickerModal()" class="text-[#8E8E93] hover:text-white text-xl transition">&times;</button>
             </div>
 
-            <p class="text-xs text-[#8E8E93]">Scegli una data qualsiasi (anche precedente agli ultimi 7 giorni) per compilare o rettificare le attività svolte:</p>
+            <p class="text-xs text-[#8E8E93]">Scegli una data qualsiasi per compilare o rettificare le attività svolte:</p>
 
             <div>
-                <input type="date" id="customDateSelect" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white font-mono text-sm focus:border-[#007AFF] focus:outline-none">
+                <input type="date" id="customDateSelect" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-white tabular-nums text-sm focus:border-[#007AFF] focus:outline-none">
             </div>
 
             <div class="flex justify-end gap-2 pt-2 border-t border-white/10">
@@ -446,8 +466,12 @@
 
             <div class="text-xs text-[#D1D1D6] space-y-3">
                 <div class="space-y-1">
+                    <h4 class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-repeat text-[#5856D6]"></i> Cuscinetto Rollover Domenicale (Max 2 Ore)</h4>
+                    <p class="text-[#8E8E93] leading-relaxed">• La domenica sera a mezzanotte (o al primo avvio della nuova settimana) il saldo attivo non utilizzato viene azzerato, <strong>salvando un cuscinetto massimo di 2h 00m (120 min)</strong> per la settimana successiva.<br>• I debiti negativi non scadono mai e si trasferiscono per intero.</p>
+                </div>
+                <div class="space-y-1">
                     <h4 class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-book-open text-[#007AFF]"></i> Studio Attivo (Cap: 120m Gaming)</h4>
-                    <p class="text-[#8E8E93] leading-relaxed">• 0 – 60 min: moltiplicatore 0.50x (60m studio = 30m PC)<br>• 60 – 150 min: moltiplicatore 0.75x<br>• Oltre 150 min: moltiplicatore 1.00x</p>
+                    <p class="text-[#8E8E93] leading-relaxed">• 0 – 60 min: 0.50x (60m studio = 30m PC)<br>• 60 – 150 min: 0.75x<br>• Oltre 150 min: 1.00x</p>
                 </div>
                 <div class="space-y-1">
                     <h4 class="font-bold text-white flex items-center gap-1.5"><i class="fa-solid fa-person-walking text-[#34C759]"></i> Camminata (Cap: 30m Gaming)</h4>
@@ -508,6 +532,7 @@
 
         let appData = {
             totalBankMinutes: 0,
+            lastRolloverWeek: null,
             history: {}
         };
 
@@ -566,6 +591,58 @@
             return `${y}-${m}-${d}`;
         }
 
+        function getISOWeekString(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+            return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+        }
+
+        function checkAndApplyWeeklyRollover() {
+            const currentWeek = getISOWeekString(new Date());
+            if (!appData.lastRolloverWeek) {
+                appData.lastRolloverWeek = currentWeek;
+                saveData();
+                return;
+            }
+
+            if (appData.lastRolloverWeek !== currentWeek) {
+                const oldBank = appData.totalBankMinutes;
+                if (oldBank > 120) {
+                    appData.totalBankMinutes = 120;
+                    showRolloverBanner(oldBank, 120);
+                } else if (oldBank > 0) {
+                    showRolloverBanner(oldBank, oldBank);
+                }
+                appData.lastRolloverWeek = currentWeek;
+                saveData();
+            }
+        }
+
+        function showRolloverBanner(oldVal, newVal) {
+            const banner = document.getElementById('rolloverAlertBanner');
+            const text = document.getElementById('rolloverAlertText');
+            if (!banner || !text) return;
+            text.innerHTML = `Nuova settimana rilevata. Saldo precedente: <strong>${formatHM(oldVal)}</strong> &rarr; Riportato al cuscinetto: <strong>${formatHM(newVal)}</strong> (Max 2h 00m).`;
+            banner.classList.remove('hidden');
+        }
+
+        function checkRolloverManualTrigger() {
+            const oldBank = appData.totalBankMinutes;
+            if (oldBank <= 120) {
+                alert(`Il tuo saldo attuale (${formatHM(oldBank)}) è già entro o pari al cuscinetto consentito di 2h 00m (120 min). Nessun taglio necessario.`);
+                return;
+            }
+            if (confirm(`Il saldo attuale è di ${formatHM(oldBank)}. Vuoi applicare manualmente il rollover domenicale tagliando l'eccedenza a 2h 00m (120 min)?`)) {
+                appData.totalBankMinutes = 120;
+                saveData();
+                updateHeaderDisplay();
+                alert(`Rollover applicato con successo! Saldo impostato a 2h 00m.`);
+            }
+        }
+
         function ensureDateRecord(dateKey) {
             if (!appData.history[dateKey]) {
                 appData.history[dateKey] = {
@@ -599,6 +676,7 @@
             }
             const today = getTodayKey();
             ensureDateRecord(today);
+            checkAndApplyWeeklyRollover();
             syncInputsFromState();
             recalculateToday();
             renderHistoryTable();
@@ -660,7 +738,7 @@
                 badge.innerText = "Zona Critica (> 5h30m)";
             }
 
-            document.getElementById('todayNetBadge').innerHTML = `Oggi netti: <span class="text-white font-semibold">+${newNet}m</span>`;
+            document.getElementById('todayNetBadge').innerHTML = `Oggi netti: <span class="text-white font-semibold tabular-nums">+${newNet}m</span>`;
 
             saveData();
             renderHistoryTable();
@@ -671,9 +749,9 @@
             display.innerText = formatHM(appData.totalBankMinutes);
 
             if (appData.totalBankMinutes < 0) {
-                display.className = "text-3xl md:text-4xl font-extrabold text-[#FF453A] tracking-tight";
+                display.className = "text-3xl md:text-4xl font-extrabold text-[#FF453A] tracking-tight tabular-nums";
             } else {
-                display.className = "text-3xl md:text-4xl font-extrabold text-[#007AFF] tracking-tight";
+                display.className = "text-3xl md:text-4xl font-extrabold text-[#007AFF] tracking-tight tabular-nums";
             }
 
             const today = getTodayKey();
@@ -685,7 +763,7 @@
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#FF3B30]/20 text-[#FF453A] border border-[#FF3B30]/40">
                         <i class="fa-solid fa-triangle-exclamation"></i> IN DEBITO
                     </span>
-                    <span class="text-[10px] text-[#8E8E93] mt-1 text-center">${formatHM(appData.totalBankMinutes)}</span>
+                    <span class="text-[10px] text-[#8E8E93] mt-1 text-center tabular-nums">${formatHM(appData.totalBankMinutes)}</span>
                 `;
             } else if (!rec || rec.study === 0) {
                 statusBadge.innerHTML = `
@@ -699,7 +777,7 @@
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#34C759]/20 text-[#30D158] border border-[#34C759]/40">
                         <i class="fa-solid fa-lock-open"></i> SBLOCCATO
                     </span>
-                    <span class="text-[10px] text-[#8E8E93] mt-1 text-center">Studio: ${rec.study}m</span>
+                    <span class="text-[10px] text-[#8E8E93] mt-1 text-center tabular-nums">Studio: ${rec.study}m</span>
                 `;
             }
         }
@@ -834,12 +912,11 @@
             } catch(e) {}
         }
 
-        // Storico Sempre Completo (mostra sempre tutti gli ultimi 7 giorni)
+        // Storico Sempre Completo
         function renderHistoryTable() {
             const tbody = document.getElementById('historyTableBody');
             tbody.innerHTML = '';
 
-            // Genera sempre l'array completo degli ultimi 7 giorni da oggi a ritroso
             const last7Days = [];
             for (let i = 0; i < 7; i++) {
                 const d = new Date();
@@ -850,17 +927,16 @@
                 last7Days.push(`${y}-${m}-${day}`);
             }
 
-            // Aggiungi anche eventuali date ancora più vecchie se presenti nella cronologia
             const allSavedDates = Object.keys(appData.history).filter(d => !last7Days.includes(d)).sort().reverse();
             const datesToDisplay = [...last7Days, ...allSavedDates];
 
             datesToDisplay.forEach(date => {
                 const row = appData.history[date] || { study: 0, steps: 0, reading: 0, phone: 0, spent: 0, earnedNet: 0 };
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/5 transition";
+                tr.className = "hover:bg-white/[0.06] transition-colors border-b border-white/5";
 
                 const isToday = (date === getTodayKey());
-                const dateLabel = isToday ? `${date} (Oggi)` : date;
+                const dateLabel = isToday ? `${date} <span class="text-[#007AFF] text-xs font-bold uppercase tracking-wider ml-1">(Oggi)</span>` : date;
 
                 const phoneH = Math.floor((row.phone || 0) / 60);
                 const phoneM = (row.phone || 0) % 60;
@@ -870,20 +946,22 @@
                 const hasData = (row.study > 0 || row.steps > 0 || row.reading > 0 || row.phone > 0 || row.spent > 0);
 
                 tr.innerHTML = `
-                    <td class="py-3 px-3 font-semibold ${isToday ? 'text-[#007AFF]' : 'text-white'}">
-                        ${dateLabel}
-                        ${!hasData && !isToday ? '<span class="text-[9px] text-[#8E8E93] ml-1 bg-white/5 px-1.5 py-0.5 rounded-full">Vuoto</span>' : ''}
+                    <td class="py-4 px-4 font-semibold text-white whitespace-nowrap">
+                        <div class="flex items-center gap-1.5">
+                            <span>${dateLabel}</span>
+                            ${!hasData && !isToday ? '<span class="text-[10px] text-[#8E8E93] bg-white/10 px-2 py-0.5 rounded-full font-medium">Vuoto</span>' : ''}
+                        </div>
                     </td>
-                    <td class="py-3 px-3">${row.study || 0}m</td>
-                    <td class="py-3 px-3">${(row.steps || 0).toLocaleString()}</td>
-                    <td class="py-3 px-3">${row.reading || 0}m</td>
-                    <td class="py-3 px-3">${phoneStr}</td>
-                    <td class="py-3 px-3 text-[#FF453A]">-${malus}m</td>
-                    <td class="py-3 px-3 font-bold text-[#007AFF]">+${row.earnedNet || 0}m</td>
-                    <td class="py-3 px-3 text-[#8E8E93]">${row.spent || 0}m</td>
-                    <td class="py-3 px-3 text-right">
-                        <button type="button" onclick="openEditModal('${date}')" class="apple-pill-btn px-2.5 py-1 bg-white/10 hover:bg-white/20 text-[#64D2FF] rounded-lg text-[11px] font-semibold border border-white/5">
-                            <i class="fa-solid fa-pen"></i> ${hasData ? 'Modifica' : 'Compila'}
+                    <td class="py-4 px-4 text-center tabular-nums font-medium text-white">${row.study || 0}m</td>
+                    <td class="py-4 px-4 text-center tabular-nums font-medium text-[#30D158]">${(row.steps || 0).toLocaleString()}</td>
+                    <td class="py-4 px-4 text-center tabular-nums font-medium text-[#FF9F0A]">${row.reading || 0}m</td>
+                    <td class="py-4 px-4 text-center tabular-nums font-medium text-[#D1D1D6]">${phoneStr}</td>
+                    <td class="py-4 px-4 text-center tabular-nums font-semibold ${malus > 0 ? 'text-[#FF453A]' : 'text-[#8E8E93]'}">-${malus}m</td>
+                    <td class="py-4 px-4 text-center tabular-nums font-bold text-[#007AFF] text-base">+${row.earnedNet || 0}m</td>
+                    <td class="py-4 px-4 text-center tabular-nums font-medium text-[#A1A1A6]">${row.spent || 0}m</td>
+                    <td class="py-4 px-4 text-right whitespace-nowrap">
+                        <button type="button" onclick="openEditModal('${date}')" class="apple-pill-btn px-3 py-1.5 bg-white/10 hover:bg-white/20 text-[#64D2FF] rounded-xl text-xs font-semibold border border-white/10 shadow-sm">
+                            <i class="fa-solid fa-pen text-[10px] mr-1"></i> ${hasData ? 'Modifica' : 'Compila'}
                         </button>
                     </td>
                 `;
@@ -989,7 +1067,6 @@
             closeEditModal();
         }
 
-        // Modale Selezione Data Personalizzata Passata
         function openDatePickerModal() {
             const picker = document.getElementById('customDateSelect');
             const yesterday = new Date();
@@ -1016,7 +1093,6 @@
             openEditModal(chosenDate);
         }
 
-        // Modali Secondari
         function openInfoModal() { document.getElementById('infoModal').classList.remove('hidden'); }
         function closeInfoModal() { document.getElementById('infoModal').classList.add('hidden'); }
         function openBackupModal() { document.getElementById('backupModal').classList.remove('hidden'); }
@@ -1064,7 +1140,7 @@
         function resetAllDataConfirmation() {
             if (confirm("Vuoi azzerare completamente tutti i dati salvati? Questa operazione è irreversibile.")) {
                 localStorage.removeItem(STORAGE_KEY);
-                appData = { totalBankMinutes: 0, history: {} };
+                appData = { totalBankMinutes: 0, lastRolloverWeek: null, history: {} };
                 const today = getTodayKey();
                 ensureDateRecord(today);
                 syncInputsFromState();
@@ -1074,7 +1150,6 @@
             }
         }
 
-        // Chart.js Telemetria Settimanale
         function updateChart() {
             const ctx = document.getElementById('weeklyChart');
             if (!ctx) return;
