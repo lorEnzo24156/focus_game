@@ -64,7 +64,15 @@
                     <i class="fa-solid fa-gamepad"></i> Attività & Tempo Gaming
                 </div>
                 <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-white">QuestToPlay</h1>
-                <p class="text-xs text-[#8E8E93]">Trasforma studio, passi e lettura in sessioni PC senza sensi di colpa.</p>
+                <!-- Widget Data Corrente & Countdown Rollover -->
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1 text-xs">
+                    <span id="currentDateBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white font-medium border border-white/10">
+                        <i class="fa-solid fa-calendar-day text-[#007AFF]"></i> Caricamento data...
+                    </span>
+                    <span id="rolloverCountdownBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5856D6]/20 text-[#D1D1D6] font-medium border border-[#5856D6]/30">
+                        <i class="fa-solid fa-repeat text-[#5E5CE6]"></i> Calcolo rollover...
+                    </span>
+                </div>
             </div>
 
             <!-- Saldo Ore & Stato -->
@@ -118,7 +126,7 @@
         <!-- Macro-Aree / Pilastri Quotidiani -->
         <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- Colonna 1: Studio Attivo & Pomodoro -->
+            <!-- Colonna 1: Studio Attivo -->
             <section class="apple-glass p-6 space-y-5">
                 <div class="flex items-center justify-between border-b border-white/10 pb-3">
                     <div class="flex items-center gap-2.5">
@@ -151,25 +159,6 @@
                         <input type="number" id="inputStudyMin" min="0" max="600" step="5" value="0" class="w-full text-center bg-black/40 border border-white/10 rounded-xl px-2 py-2 text-white tabular-nums text-sm focus:border-[#007AFF] focus:outline-none">
                         <button type="button" onclick="updatePillar('study', 15)" class="apple-pill-btn px-2.5 py-2 bg-[#007AFF]/30 hover:bg-[#007AFF]/40 text-[#64D2FF] rounded-xl text-xs font-semibold">+15m</button>
                         <button type="button" onclick="updatePillar('study', 30)" class="apple-pill-btn px-2.5 py-2 bg-[#007AFF]/50 hover:bg-[#007AFF]/60 text-white rounded-xl text-xs font-semibold">+30m</button>
-                    </div>
-                </div>
-
-                <!-- Timer Pomodoro 30 min -->
-                <div class="apple-subglass p-4 space-y-3">
-                    <div class="flex justify-between items-center text-xs text-[#8E8E93]">
-                        <span class="font-medium flex items-center gap-1.5"><i class="fa-solid fa-stopwatch text-[#007AFF]"></i> Pomodoro Focus</span>
-                        <span id="pomodoroStateLabel" class="text-[11px] font-semibold text-[#8E8E93]">Pronto</span>
-                    </div>
-                    <div id="pomodoroTimerDisplay" class="text-3xl font-extrabold text-center text-white tabular-nums tracking-widest py-1">
-                        30:00
-                    </div>
-                    <div class="flex gap-2">
-                        <button type="button" id="pomodoroBtnToggle" onclick="togglePomodoro()" class="apple-pill-btn flex-1 py-2 bg-[#007AFF] hover:bg-[#007AFF]/90 text-white rounded-xl text-xs font-bold shadow-md">
-                            Avvia Sessione
-                        </button>
-                        <button type="button" onclick="resetPomodoro()" class="apple-pill-btn px-4 py-2 bg-white/10 hover:bg-white/15 text-[#EBEBF5] rounded-xl text-xs font-semibold">
-                            Reset
-                        </button>
                     </div>
                 </div>
 
@@ -539,9 +528,41 @@
         let editingDateKey = null;
         let chartInstance = null;
 
-        // Pomodoro State
-        let pomodoroTimeLeft = 30 * 60;
-        let pomodoroTimerId = null;
+        // Funzione per visualizzare la data odierna e il conteggio verso il rollover
+        function renderHeaderDates() {
+            const now = new Date();
+            const daysNames = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+            const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+            
+            const dayOfWeek = now.getDay(); // 0 = Domenica, 1 = Lunedì, ..., 6 = Sabato
+            const dayName = daysNames[dayOfWeek];
+            const dayNum = now.getDate();
+            const monthName = monthNames[now.getMonth()];
+            
+            // Aggiorna badge data
+            const dateBadge = document.getElementById('currentDateBadge');
+            if (dateBadge) {
+                dateBadge.innerHTML = `<i class="fa-solid fa-calendar-day text-[#007AFF]"></i> ${dayName} ${dayNum} ${monthName}`;
+            }
+
+            // Calcolo giorni al prossimo rollover (la domenica a mezzanotte)
+            // Se oggi è domenica (0), il rollover scatta questa sera a mezzanotte (0 giorni rimasti)
+            // Se è lunedì (1), mancano 6 giorni (fino a domenica)
+            const daysToSunday = (7 - dayOfWeek) % 7;
+            const rolloverBadge = document.getElementById('rolloverCountdownBadge');
+            if (rolloverBadge) {
+                if (daysToSunday === 0) {
+                    rolloverBadge.innerHTML = `<i class="fa-solid fa-clock text-[#FF9500]"></i> Rollover: <strong>Stasera a mezzanotte</strong>`;
+                    rolloverBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF9500]/20 text-[#FF9F0A] font-semibold border border-[#FF9500]/30";
+                } else if (daysToSunday === 1) {
+                    rolloverBadge.innerHTML = `<i class="fa-solid fa-repeat text-[#5E5CE6]"></i> Rollover tra: <strong>1 giorno (domani)</strong>`;
+                    rolloverBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5856D6]/20 text-[#D1D1D6] font-medium border border-[#5856D6]/30";
+                } else {
+                    rolloverBadge.innerHTML = `<i class="fa-solid fa-repeat text-[#5E5CE6]"></i> Rollover tra: <strong>${daysToSunday} giorni (Domenica)</strong>`;
+                    rolloverBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#5856D6]/20 text-[#D1D1D6] font-medium border border-[#5856D6]/30";
+                }
+            }
+        }
 
         // Formule Matematiche Esatte
         function calcStudyGaming(studyMin) {
@@ -677,6 +698,7 @@
             const today = getTodayKey();
             ensureDateRecord(today);
             checkAndApplyWeeklyRollover();
+            renderHeaderDates();
             syncInputsFromState();
             recalculateToday();
             renderHistoryTable();
@@ -852,64 +874,6 @@
             if (val <= 0) return;
             spendGamingMinutes(val);
             document.getElementById('customSpendInput').value = '';
-        }
-
-        // Pomodoro
-        function togglePomodoro() {
-            const btn = document.getElementById('pomodoroBtnToggle');
-            const lbl = document.getElementById('pomodoroStateLabel');
-            if (pomodoroTimerId) {
-                clearInterval(pomodoroTimerId);
-                pomodoroTimerId = null;
-                btn.innerText = "Riprendi";
-                lbl.innerText = "In Pausa";
-            } else {
-                pomodoroTimerId = setInterval(() => {
-                    pomodoroTimeLeft--;
-                    renderPomodoro();
-                    if (pomodoroTimeLeft <= 0) {
-                        clearInterval(pomodoroTimerId);
-                        pomodoroTimerId = null;
-                        updatePillar('study', 30);
-                        playChime();
-                        alert("Blocco Pomodoro da 30m completato! +30m registrati allo studio.");
-                        resetPomodoro();
-                    }
-                }, 1000);
-                btn.innerText = "Pausa";
-                lbl.innerText = "In Corso";
-            }
-        }
-
-        function resetPomodoro() {
-            if (pomodoroTimerId) clearInterval(pomodoroTimerId);
-            pomodoroTimerId = null;
-            pomodoroTimeLeft = 30 * 60;
-            document.getElementById('pomodoroBtnToggle').innerText = "Avvia Sessione";
-            document.getElementById('pomodoroStateLabel').innerText = "Pronto";
-            renderPomodoro();
-        }
-
-        function renderPomodoro() {
-            const m = Math.floor(pomodoroTimeLeft / 60);
-            const s = pomodoroTimeLeft % 60;
-            document.getElementById('pomodoroTimerDisplay').innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-        }
-
-        function playChime() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-                gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-                osc.start();
-                osc.stop(ctx.currentTime + 1.2);
-            } catch(e) {}
         }
 
         // Storico Sempre Completo
